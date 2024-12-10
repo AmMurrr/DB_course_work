@@ -2,10 +2,9 @@ import pandas as pd
 import streamlit as st 
 from datetime import date
 import repositories.products
-from repositories.cart import add_to_cart
+from repositories.cart import add_to_cart,check_cart_amount
+import repositories.media 
 
-if "cart_counter" not in st.session_state:
-    st.session_state.cart_counter = 0
 
 
 @st.dialog("Добавление товара")
@@ -16,13 +15,30 @@ def adding_product():
     cost = st.text_input("Цена товара")
     amount = st.text_input("Доступное количество товара")
     info = st.text_input("Описание товара")
+    product_image = st.file_uploader("Загрузите изображение товара", type = ["png","jpg","jpeg"])
     if st.button("Добавить товар"):
-        repositories.products.add_product(type,product_name,company,cost,amount,info)
+        product_id = repositories.products.add_product(type,product_name,company,cost,amount,info)
+        if product_image is not None:
+            img_bytes = product_image.read()
+            repositories.media.add_media(product_id,img_bytes)
         st.rerun()
+    
 
 
 def get_products():
     return repositories.products.get_products()
+
+def delete_product(product_id):
+    repositories.products.remove_from_goods(product_id)
+    st.rerun()
+
+def get_cart_amount(user_id,product_id):
+    cart_amount = check_cart_amount(user_id,product_id) 
+    
+    if not cart_amount:
+        return 0
+    else:
+        return cart_amount[0]['amount']
 
 
 def get_amount(product_id): # получаем количество товара на данный момент
@@ -33,9 +49,24 @@ def product_to_cart(product_id):
     if product_amount == 0:
         st.write("Товар закончился")
         return False
-    add_to_cart(st.session_state.logged_in,product_id)
-    st.session_state.cart_counter += 1
-    st.write(f"В корзину добавлено {st.session_state.cart_counter} товара")
+    cart_amount = get_cart_amount(st.session_state.logged_in, product_id)
+    if product_amount - cart_amount > 0:
+        add_to_cart(st.session_state.logged_in,product_id)
+        st.session_state.cart_counter += 1
+        st.write(f"В корзину добавлено {st.session_state.cart_counter} товара")
+    else:
+        st.warning("Больше товара на складе нет!")
+
+def get_images():
+    return repositories.media.get_all_images()
+    
+
+
+def find_image(product_id,images):
+    for image in images:
+        if image["product_id"] == product_id:
+            return bytes(image["picture"])
+    return None
 
 if "products" not in st.session_state:
     st.session_state.products = get_products()
@@ -43,23 +74,42 @@ if "products" not in st.session_state:
 
 def show_selling_page():
     st.session_state.products = get_products()
-    # print(st.session_state.products)
+    # st.write(st.session_state.products)
     st.title("Каталог Товаров")
     
+    if "cart_counter" not in st.session_state:
+        st.session_state.cart_counter = 0
+
     if "is_admin" in st.session_state and st.session_state.is_admin == True:
         if st.button("+Добавить товар"):
             adding_product()
+
+    products_images = get_images()
+
     for product in st.session_state.products:
         with st.container(border=True):
             cols = st.columns([1,2])
+
             with cols[0]:
-                st.write("Image")
+                img = find_image(product["product_id"],products_images)
+                if img:
+                    st.image(img)
+                else:
+                    # log
+                    st.warning("Изображение не найдено")
+
             with cols[1]:
                 st.subheader(product["product_name"])
                 st.write(product["company"])
                 st.write(product["info"])
                 if st.button("В корзину",key=product["product_id"]):
+
                     if "logged_in" in st.session_state:
                         product_to_cart(product["product_id"])
                     else:
                         st.write("Войдите в аккаунт или зарегистрируйтесь для покупки")
+
+                if "is_admin" in st.session_state and st.session_state.is_admin == True:
+                    if st.button("❌ Убрать товар", key = "del_" + str(product["product_id"])):
+                        delete_product(product["product_id"])
+

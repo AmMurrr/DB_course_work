@@ -14,9 +14,9 @@ CREATE TABLE "auth"(
     "password_hash" TEXT NOT NULL
 );
 CREATE TABLE "sales_history"(
-    "serial" SERIAL PRIMARY KEY,
-    "user_id" BIGINT NOT NULL,
-    "product_id" BIGINT NOT NULL,
+    "sale_id" SERIAL PRIMARY KEY,
+    "user_id" BIGINT,
+    -- "product_id" BIGINT NOT NULL,
     "sale_date" DATE NOT NULL
 );
 -- ALTER TABLE
@@ -26,7 +26,7 @@ CREATE TABLE "discounts"(
     "discount_percent" BIGINT NOT NULL
 );
 CREATE TABLE "rewiews"(
-    "serial" BIGINT NOT NULL,
+    "sale_id" BIGINT NOT NULL,
     "review_text" TEXT NOT NULL,
     "rate" BIGINT NOT NULL,
     "review_date" DATE NOT NULL
@@ -50,20 +50,38 @@ CREATE TABLE "users"(
 -- ALTER TABLE
 --     "users" ADD PRIMARY KEY("user_id");
 ALTER TABLE
-    "media" ADD CONSTRAINT "media_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id");
+    "media" ADD CONSTRAINT "media_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id") ON DELETE CASCADE;
 ALTER TABLE
-    "rewiews" ADD CONSTRAINT "rewiews_serial_foreign" FOREIGN KEY("serial") REFERENCES "sales_history"("serial");
+    "rewiews" ADD CONSTRAINT "rewiews_serial_foreign" FOREIGN KEY("sale_id") REFERENCES "sales_history"("sale_id") ON DELETE SET NULL;
+-- ALTER TABLE
+--     "sales_history" ADD CONSTRAINT "sales_history_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id");
 ALTER TABLE
-    "sales_history" ADD CONSTRAINT "sales_history_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id");
+    "cart" ADD CONSTRAINT "cart_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id") ON DELETE CASCADE;
 ALTER TABLE
-    "cart" ADD CONSTRAINT "cart_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id");
+    "sales_history" ADD CONSTRAINT "sales_history_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id")ON DELETE SET NULL;
 ALTER TABLE
-    "sales_history" ADD CONSTRAINT "sales_history_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id");
+    "cart" ADD CONSTRAINT "cart_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id") ON DELETE CASCADE;
 ALTER TABLE
-    "cart" ADD CONSTRAINT "cart_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id");
+    "auth" ADD CONSTRAINT "auth_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id") ON DELETE CASCADE;
 ALTER TABLE
-    "auth" ADD CONSTRAINT "auth_user_id_foreign" FOREIGN KEY("user_id") REFERENCES "users"("user_id");
-ALTER TABLE
-    "discounts" ADD CONSTRAINT "discounts_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id");
+    "discounts" ADD CONSTRAINT "discounts_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id") ON DELETE CASCADE;
 
-    -- переделать так, чтоб был SERIAL и удаление каскадное и связи как в примере
+
+
+CREATE TABLE sale_details (
+    sale_id BIGINT NOT NULL,                -- ID продажи, связан с sale_history
+    product_id BIGINT,             -- ID товара, связан с goods
+    sale_amount BIGINT NOT NULL,            -- Количество проданных единиц
+    
+    -- Внешний ключ для связи с sale_history.sale_id
+    CONSTRAINT sale_details_sale_id_fk 
+    FOREIGN KEY (sale_id) 
+    REFERENCES sales_history(sale_id)
+    ON DELETE CASCADE,                      -- Удаление записи при удалении связанной записи из sale_history
+    
+    -- Внешний ключ для связи с goods.product_id
+    CONSTRAINT sale_details_product_id_fk 
+    FOREIGN KEY (product_id) 
+    REFERENCES goods(product_id)
+    ON DELETE SET NULL
+);
