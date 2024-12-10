@@ -17,8 +17,7 @@ def adding_product():
     amount = st.text_input("Доступное количество товара")
     info = st.text_input("Описание товара")
     if st.button("Добавить товар"):
-        product_id = len(products) + 1
-        repositories.products.add_product(product_id,type,product_name,company,cost,amount,info)
+        repositories.products.add_product(type,product_name,company,cost,amount,info)
         st.rerun()
 
 
@@ -27,7 +26,7 @@ def get_products():
 
 
 def get_amount(product_id): # получаем количество товара на данный момент
-    return next((row['amount'] for row in products if row["product_id"] == product_id),None)
+    return next((row['amount'] for row in st.session_state.products if row["product_id"] == product_id),None)
 
 def product_to_cart(product_id):
     product_amount = get_amount(product_id)
@@ -38,24 +37,26 @@ def product_to_cart(product_id):
     st.session_state.cart_counter += 1
     st.write(f"В корзину добавлено {st.session_state.cart_counter} товара")
 
-products = get_products()
+if "products" not in st.session_state:
+    st.session_state.products = get_products()
  
 
 def show_selling_page():
-    products = get_products()
-    print(products)
+    st.session_state.products = get_products()
+    # print(st.session_state.products)
     st.title("Каталог Товаров")
     
     if "is_admin" in st.session_state and st.session_state.is_admin == True:
         if st.button("+Добавить товар"):
             adding_product()
-    for product in products:
+    for product in st.session_state.products:
         with st.container(border=True):
             cols = st.columns([1,2])
             with cols[0]:
                 st.write("Image")
             with cols[1]:
                 st.subheader(product["product_name"])
+                st.write(product["company"])
                 st.write(product["info"])
                 if st.button("В корзину",key=product["product_id"]):
                     if "logged_in" in st.session_state:

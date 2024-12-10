@@ -11,14 +11,15 @@ def execute_query(query,parameters=None,is_fetch = False,is_fetchall = False):
                 cur.execute(query, parameters)
 
                 if is_fetch:
-                    conn.commit()
-                    return cur.fetchall()
+                    result =  cur.fetchall()
                 else:
-                    conn.commit()
-                    return None
+                    result =  None
+                conn.commit()
+                return result
+
     except psycopg2.Error as e:
         conn.rollback()
-        printf("Ошибка {e}")
+        print(f"Ошибка {e}")
     finally:
         if cur:
             cur.close()
