@@ -39,6 +39,7 @@ def check_cart_amount(user_id,product_id):
 def get_cart_products(user_id):
     query = """
     SELECT product_id, amount FROM cart WHERE user_id = %(user_id)s
+    ORDER BY product_id
     """
     return execute_query(query,{"user_id": user_id},True)
 

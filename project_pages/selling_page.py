@@ -5,7 +5,8 @@ import repositories.products
 from repositories.cart import add_to_cart,check_cart_amount
 import repositories.media 
 
-
+import logging
+import log_config
 
 @st.dialog("Добавление товара")
 def adding_product():
@@ -26,9 +27,11 @@ def adding_product():
 
 
 def get_products():
+    logging.info("Получаем список товаров")
     return repositories.products.get_products()
 
 def delete_product(product_id):
+    logging.info(f"Удаление товара с ID {product_id}")
     repositories.products.remove_from_goods(product_id)
     st.rerun()
 
@@ -36,8 +39,10 @@ def get_cart_amount(user_id,product_id):
     cart_amount = check_cart_amount(user_id,product_id) 
     
     if not cart_amount:
+        logging.info(f"Товара {product_id} нет в корзине {user_id}")
         return 0
     else:
+        logging.info(f"Получили количество товара {product_id} в корзине {user_id}")
         return cart_amount[0]['amount']
 
 
@@ -46,6 +51,8 @@ def get_amount(product_id): # получаем количество товара
 
 def product_to_cart(product_id):
     product_amount = get_amount(product_id)
+    logging.info(f"Товара {product_id} на складе {product_amount}")
+
     if product_amount == 0:
         st.write("Товар закончился")
         return False
@@ -53,11 +60,13 @@ def product_to_cart(product_id):
     if product_amount - cart_amount > 0:
         add_to_cart(st.session_state.logged_in,product_id)
         st.session_state.cart_counter += 1
+        logging.info(f"Товар {product_id} добавлен в корзину {st.session_state.logged_in}")
         st.write(f"В корзину добавлено {st.session_state.cart_counter} товара")
     else:
         st.warning("Больше товара на складе нет!")
 
 def get_images():
+    logging.info("Получаем изображения товаров")
     return repositories.media.get_all_images()
     
 
@@ -82,6 +91,7 @@ def show_selling_page():
 
     if "is_admin" in st.session_state and st.session_state.is_admin == True:
         if st.button("+Добавить товар"):
+            logging.info("Вызвано добавление товара")
             adding_product()
 
     products_images = get_images()
@@ -95,7 +105,7 @@ def show_selling_page():
                 if img:
                     st.image(img)
                 else:
-                    # log
+                    logging.info(f"Изображение " + str(product["product_id"]) + " не найдено")
                     st.warning("Изображение не найдено")
 
             with cols[1]:
@@ -105,11 +115,14 @@ def show_selling_page():
                 if st.button("В корзину",key=product["product_id"]):
 
                     if "logged_in" in st.session_state:
+                        logging.info("Вызвано добавление в корзину")
                         product_to_cart(product["product_id"])
                     else:
+                        log.info("You have no power here!")
                         st.write("Войдите в аккаунт или зарегистрируйтесь для покупки")
 
                 if "is_admin" in st.session_state and st.session_state.is_admin == True:
                     if st.button("❌ Убрать товар", key = "del_" + str(product["product_id"])):
+                        logging.info("Удаляем товар")
                         delete_product(product["product_id"])
 

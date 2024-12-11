@@ -4,6 +4,8 @@ from services.sales import SaleService
 from datetime import date
 from repositories.media import get_image
 
+import logging
+import log_config
 
 @st.cache_data
 def find_product_by_id(product_id,products):
@@ -13,32 +15,40 @@ def find_product_by_id(product_id,products):
     return None
 
 def get_cart_products():
+    logging.info(f"Получаем товары в корзине пользователя {st.session_state.logged_in}")
     return repositories.cart.get_cart_products(st.session_state.logged_in)
 
 def cart_clearing():
+    logging.info(f"Чистка корзины пользователя {st.session_state.logged_in}")
     repositories.cart.clear_cart(st.session_state.logged_in)
 
 def create_sale(cart_products):
     sale_date = date.today()
     sale_id = SaleService.process_sale(st.session_state.logged_in, cart_products,sale_date)
-    # log
     return sale_id
 
 def update_cart_product(product_id,change):
+    user_id = st.session_state.logged_in
     match change:
         case 1:
-            repositories.cart.add_to_cart(st.session_state.logged_in,product_id)
+            logging.info(f"Увеличиваем количество товара {product_id} в корзине пользователя {user_id}")
+            repositories.cart.add_to_cart(user_id,product_id)
         case -1:
-            repositories.cart.take_from_cart(st.session_state.logged_in,product_id)
+            logging.info(f"Уменьшаем количество товара {product_id} в корзине пользователя {user_id}")
+            repositories.cart.take_from_cart(user_id,product_id)
         case 0:
-            repositories.cart.remove_from_cart(st.session_state.logged_in,product_id)
+            logging.info(f"исключаем товар {product_id} из корзины пользователя {user_id}")
+            repositories.cart.remove_from_cart(user_id,product_id)
 
 
 def get_product_image(product_id):
     image = get_image(product_id)
+    
     if image:
+        logging.info(f"Получили изображение товара {product_id}")
         return bytes(image[0]["picture"])
     else:
+        logging.info(f"Изображение товара {product_id} не найдено")
         return None
 
 @st.dialog("Покупка прошла успешно!")
@@ -114,12 +124,16 @@ def show_cart_page():
                 st.rerun()
 
     # Общая стоимость корзины
-    # total_cost = sum(cost * amount for _, _, cost, _, amount in cart_products)
     st.write(f"### Общая стоимость: {total_cost} ₽")
     sale_btn = st.button("Купить")
     # оформелние? 
     if sale_btn:
+        logging.info("Инициализация покупки")
         sale_id = create_sale(cart_products)
         if sale_id != -1: 
             cart_clearing()
+            logging.info(f"Покупка {sale_id} прошла успешно!")
             success_sale(sale_id)
+        else:
+            logging.info("Покупка не прошла")
+            st.warning("Проблемы с оформлением покупки. Пожалуйста попробуйте позже.")

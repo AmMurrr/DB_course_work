@@ -11,7 +11,8 @@ def add_product(type,product_name, company,cost,amount,info):
 
 def get_products():
     query = """
-        SELECT * FROM goods 
+        SELECT product_id, type,product_name,company,cost,amount,info FROM goods 
+        ORDER BY product_id
     """
     return execute_query(query,is_fetch=True)
 
