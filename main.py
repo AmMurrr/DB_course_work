@@ -42,16 +42,39 @@ def password_hashing(password):
     logging.info("Пароль захэширован")
     return hashed_password
 
+def is_mail_used(mail):
+    mails = repositories.account.get_mails()
+    for mail_item in mails:
+        if mail == mail_item["mail"]:
+            logging.info(f"Пользователь с почтой {mail} уже есть")
+            return True
+    return False
+
 def sign_up(login, mail, password, birth_date):
-    if mail in repositories.account.get_mails():
+    if is_mail_used(mail):
         logging.info(f"Аккаунт с почтой {mail} уже зарегистрирован")
         return -1
-    # проверка пароля?
+
     new_user_id = repositories.account.add_user(login,mail,birth_date)
 
     hashed_password = password_hashing(password)
     repositories.account.add_hash(new_user_id,hashed_password.decode('utf-8'))
     return new_user_id
+
+def check_input(login,password, mail):
+    logging.info("Проверяем пароль, почту и логин")
+    check_counter = 0
+    if len(login) >= 3 and not login.isspace():
+        check_counter += 1
+    if len(mail) >= 5 and mail.find("@") > 0:
+        check_counter += 1
+    if len(password) > 4 and not password.isdigit():
+        check_counter += 1
+    
+    if check_counter == 3:
+        return True
+    else:
+        return False
 
 @st.dialog("Регистрация")
 def signing_up():
@@ -66,7 +89,7 @@ def signing_up():
     birth_date = st.date_input(" ")
 
     if st.button("Подтвердить "):
-        if login != "" and password != "" and mail != "": # make better check
+        if check_input(login,password,mail): 
 
             valid_user_check = sign_up(login,mail,password,birth_date)
             if valid_user_check != -1:
@@ -83,7 +106,7 @@ def signing_up():
             
             
         else:
-            st.write("Некоторые данные не заполнены")
+            st.write("Некоторые данные некорректно заполнены")
 
 
 @st.dialog("Вход")
@@ -108,7 +131,7 @@ def signing_in():
             logging.info("Не удалось войти")
             st.write("Почта или пароль неверны")
 
-# def start_param():
+
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = -1    
 
@@ -119,7 +142,6 @@ if "key" not in st.query_params:
     st.query_params.key="0"
 
 def main():
-    # st.title("Продажа туристического снаряжения")
     st.sidebar.title("Магазин туристического снаряжения Rock&Stone")
 
     if st.session_state.logged_in < 0 :
@@ -179,21 +201,22 @@ if __name__=="__main__":
 # добавление в корзину COMPLETED
 # добавить поддержку картинок товаров COMPLETED
 # !!!! обработка покупок (количество товара должно уменьшаться после покупки, чек равный id покупки) TOMORROW
-# ! сохранение информации после рестарта страницы ( через куки) TOMORROW
-# отзывы сделать ----              THINK TOMORROW
-# ? скидки если будет время -----  THINK TOMORROW
+# ! сохранение информации после рестарта страницы ( через куки) COMPLETED BUT AT WHAT COST
+# отзывы сделать ----              NO TIME
+# ? скидки если будет время -----  SOMEDAY LATER 
 # убедиться что sql файлы создают всё правильно
 # !!! разобраться нужно ли пересоздавать sales_history COMPLETED
 # удаление товаров админом !!  каскадом? COMPLETED
 # сделать корзину COMPLETED
-# Нужно ли оформлять по особому markdown, colors? 
 # Насчёт слов Вани о том, можно ли sql тут запускать COMPLETED
 # панель админа ( страница) со статистикой продаж COMPLETED
 # порядок после изменения goods меняется    COMPLETED
-# приведи изображение и товары в порядок
-# придумать название
-# триггеры, функции, процедуры
+# приведи изображение и товары в порядок TOMORROW
+# придумать название TOMORROW
+# триггеры, функции, процедуры COMPLETED
 # удаление из sales или null заполнять COMPLETED
-# используй логин почту и т д  и вместо корзины сделай аккаунт (смена пароля) TODAY
+# используй логин почту и т д  и вместо корзины сделай аккаунт (смена пароля) COMPLETED
 # добавь эмозди COMPLETED
-
+# Проверь удаление пользователей всех TOMORROW
+# Оформи, цвета поменяй st.page_config TOMORROW
+# WHAT ELSE ???

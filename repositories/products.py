@@ -28,3 +28,16 @@ def get_product_name(product_id):
         SELECT product_name FROM goods WHERE product_id = %s
     """
     return execute_query(query,(product_id,),True)[0]["product_name"]
+
+
+def get_goods_log():
+    query = """
+        SELECT * FROM goods_log
+    """
+    return execute_query(query,is_fetch=True)
+
+def delete_logs():
+    query = """
+        CALL clear_goods_log();
+    """
+    return execute_query(query)

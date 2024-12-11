@@ -68,7 +68,6 @@ ALTER TABLE
     "discounts" ADD CONSTRAINT "discounts_product_id_foreign" FOREIGN KEY("product_id") REFERENCES "goods"("product_id") ON DELETE CASCADE;
 
 
-
 CREATE TABLE sale_details (
     sale_id BIGINT NOT NULL,                -- ID продажи, связан с sale_history
     product_id BIGINT,             -- ID товара, связан с goods
@@ -86,3 +85,45 @@ CREATE TABLE sale_details (
     REFERENCES goods(product_id)
     ON DELETE SET NULL
 );
+
+CREATE TABLE goods_log (
+    log_id SERIAL PRIMARY KEY,
+    product_id BIGINT,
+    ACTION TEXT,
+    log_time TIMESTAMP default CURRENT_TIMESTAMP
+);
+
+
+-- Функция
+CREATE OR REPLACE FUNCTION log_goods_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        INSERT INTO goods_log (product_id,action)
+        VALUES (OLD.product_id, 'DELETE');
+    ELSIF TG_OP = 'INSERT' THEN
+        INSERT INTO goods_log (product_id,action)
+        VALUES (NEW.product_id, 'INSERT');
+    ELSE
+        INSERT INTO goods_log (product_id,action)
+        VALUES (NEW.product_id, 'UPDATE');
+    END IF;
+    RETURN NULL;
+
+END;
+$$ LANGUAGE plpgsql;
+
+-- Триггер
+CREATE TRIGGER goods_changes_trigger
+AFTER INSERT OR UPDATE OR DELETE ON goods
+FOR EACH ROW EXECUTE FUNCTION log_goods_changes();
+
+
+-- Процедура
+CREATE OR REPLACE PROCEDURE clear_goods_log()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM goods_log;
+END;
+$$

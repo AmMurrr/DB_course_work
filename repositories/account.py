@@ -26,7 +26,6 @@ def get_hash(user_id):
     """
     result  = execute_query(query,{"user_id":user_id},True)
     if not result:
-        # log
         return None
     return result[0]["password_hash"]
     
@@ -46,7 +45,6 @@ def get_sign_in(mail):
     result = execute_query(query,{"mail": mail},is_fetch=True)
 
     if not result:
-        # log
         return None
     return result[0]["user_id"]
 
@@ -56,8 +54,45 @@ def get_user_info(user_id):
     """
     return execute_query(query,(user_id,),True)[0]
 
-def user_purge():
+def user_purge(user_id):
     query = """
-        DELETE FROM users
+        DELETE FROM users WHERE user_id != %s
     """
-    return execute_query(query)
+    return execute_query(query,(user_id, ))
+
+
+def change_login(user_id, new_login):
+    query = """
+        UPDATE users
+        SET login = %(new_login)s
+        WHERE user_id = %(user_id)s
+    """
+    return execute_query(query,{"new_login":new_login, "user_id": user_id})
+
+def change_mail(user_id, new_mail):
+    query = """
+        UPDATE users
+        SET mail = %(new_mail)s
+        WHERE user_id = %(user_id)s
+    """
+    return execute_query(query,{"new_mail":new_mail, "user_id": user_id})
+
+def change_password(user_id, new_password):
+    query = """
+        UPDATE auth
+        SET password_hash = %(new_password)s
+        WHERE user_id = %(user_id)s
+    """
+    return execute_query(query,{"new_password":new_password, "user_id": user_id})
+
+def delete_user(user_id):
+    query = """
+        DELETE FROM users where user_id = %s
+    """
+    return execute_query(query,(user_id,))
+
+def get_all_users():
+    query = """
+        SELECT * FROM users
+    """
+    return execute_query(query,is_fetch=True)
