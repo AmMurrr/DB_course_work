@@ -5,8 +5,8 @@ import logging
 import log_config
 
 class SaleService:
-    def process_sale(user_id, sale_products, sale_date):
-        sale_id = repositories.sales.add_sale(user_id,sale_date)
+    def process_sale(user_id, sale_products, sale_date,total_cost):
+        sale_id = repositories.sales.add_sale(user_id,sale_date,total_cost)
         
         if not sale_id:
             logging.info("Добавить покупку не получилось")

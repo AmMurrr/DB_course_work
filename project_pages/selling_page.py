@@ -114,11 +114,11 @@ def show_selling_page():
                 st.write(product["info"])
                 if st.button("В корзину",key=product["product_id"]):
 
-                    if "logged_in" in st.session_state:
+                    if st.session_state.logged_in > 0:
                         logging.info("Вызвано добавление в корзину")
                         product_to_cart(product["product_id"])
                     else:
-                        log.info("You have no power here!")
+                        logging.info("You have no power here!")
                         st.write("Войдите в аккаунт или зарегистрируйтесь для покупки")
 
                 if "is_admin" in st.session_state and st.session_state.is_admin == True:

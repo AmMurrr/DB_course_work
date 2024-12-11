@@ -22,9 +22,9 @@ def cart_clearing():
     logging.info(f"Чистка корзины пользователя {st.session_state.logged_in}")
     repositories.cart.clear_cart(st.session_state.logged_in)
 
-def create_sale(cart_products):
+def create_sale(cart_products,total_cost):
     sale_date = date.today()
-    sale_id = SaleService.process_sale(st.session_state.logged_in, cart_products,sale_date)
+    sale_id = SaleService.process_sale(st.session_state.logged_in, cart_products,sale_date,total_cost)
     return sale_id
 
 def update_cart_product(product_id,change):
@@ -72,56 +72,57 @@ def show_cart_page():
 
     # Отображаем товары в корзине
     for item in cart_products:
-        product_id = item["product_id"]
-        amount = item["amount"]
-        product = find_product_by_id(product_id,st.session_state.products)
-        if not product:
-            st.warning(f"Товар с ID {product_id} не найден в каталоге")
-            continue
+        with st.container(border=True):
+            product_id = item["product_id"]
+            amount = item["amount"]
+            product = find_product_by_id(product_id,st.session_state.products)
+            if not product:
+                st.warning(f"Товар с ID {product_id} не найден в каталоге")
+                continue
 
-        product_name = product["product_name"]
-        cost = product["cost"]
-        stored_amount = product["amount"]
-        product_image = get_product_image(product_id)
+            product_name = product["product_name"]
+            cost = product["cost"]
+            stored_amount = product["amount"]
+            product_image = get_product_image(product_id)
 
-        total_cost += cost * amount
+            total_cost += cost * amount
 
-        col1, col2, col3 = st.columns([1, 3, 1])
+            col1, col2, col3 = st.columns([1, 3, 1])
 
-        with col1:
-            # Загружаем и отображаем изображение товара
-            if product_image:
-                st.image(product_image)
-            else:
-                st.warning("Изображение не найдено")
-
-        with col2:
-            # Информация о товаре
-            st.subheader(product_name)
-            st.write(f"Цена: {cost} ₽")
-            st.write(f"Количество: {amount}")
-
-
-            # Кнопки для изменения количества
-            if st.button("➖ Уменьшить", key=f"decrease-{product_id}"):
-                if amount > 1:
-                    update_cart_product( product_id, -1)
+            with col1:
+                # Загружаем и отображаем изображение товара
+                if product_image:
+                    st.image(product_image)
                 else:
-                    update_cart_product( product_id, 0) 
-                st.rerun()
+                    st.warning("Изображение не найдено")
 
-            if st.button("➕ Увеличить", key=f"increase-{product_id}"):
-                if stored_amount - amount > 0:
-                    update_cart_product( product_id, 1)
+            with col2:
+                # Информация о товаре
+                st.subheader(product_name)
+                st.write(f"Цена: {cost} ₽")
+                st.write(f"Количество: {amount}")
+
+
+                # Кнопки для изменения количества
+                if st.button("➖ Уменьшить", key=f"decrease-{product_id}"):
+                    if amount > 1:
+                        update_cart_product( product_id, -1)
+                    else:
+                        update_cart_product( product_id, 0) 
                     st.rerun()
-                else:
-                    st.warning("Превышено число товара на складе")
 
-        with col3:
-            # Кнопка удаления товара
-            if st.button("❌ Удалить", key=f"delete-{product_id}"):
-                update_cart_product( product_id, 0)
-                st.rerun()
+                if st.button("➕ Увеличить", key=f"increase-{product_id}"):
+                    if stored_amount - amount > 0:
+                        update_cart_product( product_id, 1)
+                        st.rerun()
+                    else:
+                        st.warning("Превышено число товара на складе")
+
+            with col3:
+                # Кнопка удаления товара
+                if st.button("❌ Удалить", key=f"delete-{product_id}"):
+                    update_cart_product( product_id, 0)
+                    st.rerun()
 
     # Общая стоимость корзины
     st.write(f"### Общая стоимость: {total_cost} ₽")
@@ -129,7 +130,7 @@ def show_cart_page():
     # оформелние? 
     if sale_btn:
         logging.info("Инициализация покупки")
-        sale_id = create_sale(cart_products)
+        sale_id = create_sale(cart_products,total_cost)
         if sale_id != -1: 
             cart_clearing()
             logging.info(f"Покупка {sale_id} прошла успешно!")

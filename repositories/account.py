@@ -36,23 +36,28 @@ def get_mails():
     query = """
      SELECT mail FROM users
     """
-    # with psycopg2.connect(**DB_CONFIG) as conn:
-    #     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-    #         cur.execute(query)
-    #         return cur.fetchall()
     return execute_query(query,is_fetch=True)
 
 def get_sign_in(mail):
     query = """
         SELECT user_id FROM users WHERE mail = %(mail)s
     """
-    # with psycopg2.connect(**DB_CONFIG) as conn:
-    #     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-    #         cur.execute(query, (mail))
-    #         return cur.fetchone()
+
     result = execute_query(query,{"mail": mail},is_fetch=True)
 
     if not result:
         # log
         return None
     return result[0]["user_id"]
+
+def get_user_info(user_id):
+    query = """
+        SELECT login,mail, birth_date FROM users WHERE user_id = %s
+    """
+    return execute_query(query,(user_id,),True)[0]
+
+def user_purge():
+    query = """
+        DELETE FROM users
+    """
+    return execute_query(query)

@@ -17,7 +17,8 @@ CREATE TABLE "sales_history"(
     "sale_id" SERIAL PRIMARY KEY,
     "user_id" BIGINT,
     -- "product_id" BIGINT NOT NULL,
-    "sale_date" DATE NOT NULL
+    "sale_date" DATE NOT NULL,
+    "total_cost" BIGINT NOT NULL
 );
 -- ALTER TABLE
 --     "sales_history" ADD PRIMARY KEY("serial");

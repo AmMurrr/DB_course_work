@@ -1,18 +1,20 @@
 from project_pages.selling_page import show_selling_page
 from project_pages.cart_page import show_cart_page
 from project_pages.admin_page import show_admin_page
+from project_pages.account_page import show_account_page
 import repositories.account
 import streamlit as st
 import bcrypt
 
+import services.cookies
+
 import logging
 import log_config
 
+Admin_ids =[1] # ID всех админов
+# st.session_state.is_admin = True
+# st.session_state.logged_in = 1
 
-
-Admin_ids =[1]
-st.session_state.is_admin = True
-st.session_state.logged_in = 1
 
 def sign_in(mail, password):# 
     user_id = repositories.account.get_sign_in(mail) # ищем в БД айди по почте
@@ -26,7 +28,6 @@ def sign_in(mail, password):#
     if not bcrypt.checkpw(password.encode('utf-8'),hashed_password.encode('utf-8')): # проверка пароля 
         logging.info("Пароли не совпадают")
         return -1
-    # print(user_id)
 
     if user_id in Admin_ids:
         logging.info(f"Администратор {user_id} вошел в аккаунт")
@@ -71,6 +72,10 @@ def signing_up():
             if valid_user_check != -1:
                 logging.info(f"Зарегистрирован пользователь {valid_user_check}")
                 st.session_state.logged_in = valid_user_check
+
+                token = services.cookies.generate_jwt(valid_user_check) 
+                services.cookies.set_cookie("auth_token",token) # creating cookie
+
                 st.rerun()
             else:
                 logging.info("Не получилось создать аккаунт")
@@ -94,24 +99,48 @@ def signing_in():
         if valid_user_check != -1:
             logging.info(f"Пользователь {valid_user_check} вошел в аккаунт")
             st.session_state.logged_in = valid_user_check
+
+            token = services.cookies.generate_jwt(valid_user_check) 
+            services.cookies.set_cookie("auth_token",token) # creating cookie
+
             st.rerun()
         else:
             logging.info("Не удалось войти")
             st.write("Почта или пароль неверны")
-        
+
+# def start_param():
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = -1    
+
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False 
+
+if "key" not in st.query_params:
+    st.query_params.key="0"
 
 def main():
     # st.title("Продажа туристического снаряжения")
     st.sidebar.title("Магазин туристического снаряжения Rock&Stone")
-    if "logged_in" not in st.session_state:
-        if st.sidebar.button("Зарегистрироваться"):
+
+    if st.session_state.logged_in < 0 :
+        token = services.cookies.get_cookie("auth_token") # check for cookie
+        if token:
+            user_id = services.cookies.verify_jwt(token)
+            if user_id:
+                logging.info(f"{user_id} Вошёл в аккаунт по куки")
+                st.session_state.logged_in = user_id
+                st.session_state.is_admin = True if user_id in Admin_ids else False
+                    
+
+    if st.session_state.logged_in < 0:
+        if st.sidebar.button("🔼 Зарегистрироваться"):
             logging.info("Выбрана регистрация")
             signing_up()
-        if st.sidebar.button("Войти"):
+        if st.sidebar.button("🔽 Войти"):
             logging.info("Выбран вход")
             signing_in()
 
-    pages = ["Каталог товаров","Корзина"]
+    pages = ["Каталог товаров","Корзина","Аккаунт"]
     if "is_admin" in st.session_state and st.session_state.is_admin == True:
         pages.append("Панель Администратора")
 
@@ -121,11 +150,17 @@ def main():
         logging.info(f"Выбрана страница {page}")
         show_selling_page()
     if page == "Корзина":
-        if "logged_in" in st.session_state:
+        if st.session_state.logged_in > 0:
             logging.info(f"Выбрана страница {page}")
             show_cart_page()
         else:
-            st.write("Войдите в аккаунт")
+            st.write("## Войдите в аккаунт")
+    if page == "Аккаунт":
+        if st.session_state.logged_in > 0:
+            logging.info(f"Выбрана страница {page}")
+            show_account_page()
+        else:
+            st.write("## Войдите в аккаунт")
     if page == "Панель Администратора":
             logging.info(f"Выбрана страница {page}")
             show_admin_page()
@@ -152,10 +187,13 @@ if __name__=="__main__":
 # удаление товаров админом !!  каскадом? COMPLETED
 # сделать корзину COMPLETED
 # Нужно ли оформлять по особому markdown, colors? 
-# Насчёт слов Вани о том, можно ли sql тут запускать ASK TOMORROW
-# панель админа ( страница) со статистикой продаж HALF_COMPLETED TOMORROW
-# порядок после изменения goods меняется TOMORROW
+# Насчёт слов Вани о том, можно ли sql тут запускать COMPLETED
+# панель админа ( страница) со статистикой продаж COMPLETED
+# порядок после изменения goods меняется    COMPLETED
 # приведи изображение и товары в порядок
 # придумать название
 # триггеры, функции, процедуры
-# удаление из sales или null заполнять TODAY
+# удаление из sales или null заполнять COMPLETED
+# используй логин почту и т д  и вместо корзины сделай аккаунт (смена пароля) TODAY
+# добавь эмозди COMPLETED
+
