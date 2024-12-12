@@ -16,6 +16,8 @@ Admin_ids =[1] # ID всех админов
 # st.session_state.logged_in = 1
 
 
+st.set_page_config("TerraVentura",page_icon='random')
+
 def sign_in(mail, password):# 
     user_id = repositories.account.get_sign_in(mail) # ищем в БД айди по почте
 
@@ -84,7 +86,7 @@ def signing_up():
     st.write("Введите почту")
     mail = st.text_input(" ")
     st.write("Введите пароль")
-    password = st.text_input("Пароль должен содержать не менее 24 символов, хотя бы одну заглавную букву, цифру, специальный символ,эмодзи, иероглиф и узелковое письмо инков")
+    password = st.text_input("Пароль должен содержать не менее 24 символов, хотя бы одну заглавную букву, цифру, специальный символ,эмодзи, иероглиф и узелковое письмо инков",type="password" )
     st.write("Введите свою дату рождения")
     birth_date = st.date_input(" ")
 
@@ -115,7 +117,7 @@ def signing_in():
     st.write("Введите почту")
     mail = st.text_input(" ",key = -1)
     st.write("Введите пароль")
-    password = st.text_input(" ",key = -2)
+    password = st.text_input(" ",key = -2,type="password")
 
     if st.button(" Подтвердить",):
         valid_user_check = sign_in(mail,password)
@@ -142,7 +144,9 @@ if "key" not in st.query_params:
     st.query_params.key="0"
 
 def main():
-    st.sidebar.title("Магазин туристического снаряжения Rock&Stone")
+    st.sidebar.title("TerraVentura")
+    st.sidebar.subheader("Магазин туристического снаряжения")
+    st.sidebar.write("Ad astra per aspera!")
 
     if st.session_state.logged_in < 0 :
         token = services.cookies.get_cookie("auth_token") # check for cookie
@@ -165,6 +169,7 @@ def main():
     pages = ["Каталог товаров","Корзина","Аккаунт"]
     if "is_admin" in st.session_state and st.session_state.is_admin == True:
         pages.append("Панель Администратора")
+    
 
     page = st.sidebar.radio("Выбранная страница",pages)
 
@@ -196,27 +201,3 @@ if __name__=="__main__":
 
 # ad4fb8d1 - пароль для айди 1
 
-# доделать добавление пользователей( пароли и хэши) COMPLETED
-# сделать логи и/или отлов ошибок COMPLETED
-# добавление в корзину COMPLETED
-# добавить поддержку картинок товаров COMPLETED
-# !!!! обработка покупок (количество товара должно уменьшаться после покупки, чек равный id покупки) TOMORROW
-# ! сохранение информации после рестарта страницы ( через куки) COMPLETED BUT AT WHAT COST
-# отзывы сделать ----              NO TIME
-# ? скидки если будет время -----  SOMEDAY LATER 
-# убедиться что sql файлы создают всё правильно
-# !!! разобраться нужно ли пересоздавать sales_history COMPLETED
-# удаление товаров админом !!  каскадом? COMPLETED
-# сделать корзину COMPLETED
-# Насчёт слов Вани о том, можно ли sql тут запускать COMPLETED
-# панель админа ( страница) со статистикой продаж COMPLETED
-# порядок после изменения goods меняется    COMPLETED
-# приведи изображение и товары в порядок TOMORROW
-# придумать название TOMORROW
-# триггеры, функции, процедуры COMPLETED
-# удаление из sales или null заполнять COMPLETED
-# используй логин почту и т д  и вместо корзины сделай аккаунт (смена пароля) COMPLETED
-# добавь эмозди COMPLETED
-# Проверь удаление пользователей всех TOMORROW
-# Оформи, цвета поменяй st.page_config TOMORROW
-# WHAT ELSE ???

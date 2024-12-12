@@ -10,6 +10,7 @@ import log_config
 
 @st.dialog("Добавление товара")
 def adding_product():
+
     type = st.text_input("Тип товара")
     product_name = st.text_input("Название товара")
     company = st.text_input("Компания-производитель товара")
@@ -17,10 +18,14 @@ def adding_product():
     amount = st.text_input("Доступное количество товара")
     info = st.text_input("Описание товара")
     product_image = st.file_uploader("Загрузите изображение товара", type = ["png","jpg","jpeg"])
-    if st.button("Добавить товар"):
+    
+    if st.button("Добавить товар"):    
         product_id = repositories.products.add_product(type,product_name,company,cost,amount,info)
+        logging.info(f"Добавили товар {product_id}")
+
         if product_image is not None:
             img_bytes = product_image.read()
+            logging.info("Добавляем изображение нового товара")
             repositories.media.add_media(product_id,img_bytes)
         st.rerun()
     
@@ -65,11 +70,21 @@ def product_to_cart(product_id):
     else:
         st.warning("Больше товара на складе нет!")
 
+def search_ckeck(search,product_name):  
+    if product_name.lower().find(search.lower()) >= 0:
+        return True
+    else:
+        return False
+
+def tag_check(tag, product_type):
+    if tag == product_type:
+        return True
+    else:
+        return False
+
 def get_images():
     logging.info("Получаем изображения товаров")
     return repositories.media.get_all_images()
-    
-
 
 def find_image(product_id,images):
     for image in images:
@@ -83,7 +98,6 @@ if "products" not in st.session_state:
 
 def show_selling_page():
     st.session_state.products = get_products()
-    # st.write(st.session_state.products)
     st.title("Каталог Товаров")
     
     if "cart_counter" not in st.session_state:
@@ -93,10 +107,23 @@ def show_selling_page():
         if st.button("+Добавить товар"):
             logging.info("Вызвано добавление товара")
             adding_product()
+    
+    tag_options = set([row["type"] for row in st.session_state.products])
+    search = st.text_input("🔍 Поиск товара по названию:")
+    tag = st.pills("Тип товара",tag_options)
 
     products_images = get_images()
 
     for product in st.session_state.products:
+
+        if not search.isspace() or len(search) > 3:
+            if not search_ckeck(search, product["product_name"]):
+                continue
+        
+        if tag:
+            if not tag_check(tag,product["type"]):
+                continue
+
         with st.container(border=True):
             cols = st.columns([1,2])
 
@@ -112,6 +139,7 @@ def show_selling_page():
                 st.subheader(product["product_name"])
                 st.write(product["company"])
                 st.write(product["info"])
+                st.write("#### Цена: " + str(product["cost"]) + " ₽")
                 if st.button("В корзину",key=product["product_id"]):
 
                     if st.session_state.logged_in > 0:
@@ -125,4 +153,6 @@ def show_selling_page():
                     if st.button("❌ Убрать товар", key = "del_" + str(product["product_id"])):
                         logging.info("Удаляем товар")
                         delete_product(product["product_id"])
+
+                
 

@@ -23,9 +23,6 @@ def get_name(product_id):
 def user_purge():
     admin_id = st.session_state.logged_in
     logging.info(f"Удаление всех пользователей, кроме {admin_id}")
-    # set_cookie("auth_token","0")
-    # st.session_state.logged_in = -1
-    # st.session_state.is_admin = False
     user_purge(admin_id)
     st.rerun()
 
@@ -78,10 +75,12 @@ def show_admin_page():
                 with cols[1]:
                     st.subheader("Купленные товары:")
                     for product in sale_products:
-                        product_name = get_name(product["product_id"])
-                        amount = product["amount"]
-                        st.write(f"### {product_name} в количестве  {amount}")
-
+                        if product["product_id"] is not None:
+                            product_name = get_name(product["product_id"])
+                            amount = product["amount"]
+                            st.write(f"### {product_name} в количестве  {amount}")
+                        else:
+                            st.write("### Товар был удален")
                 with cols[2]:
                     st.subheader("Сумма продажи:")
                     st.write(f"### {sale_cost} ₽")

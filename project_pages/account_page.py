@@ -52,8 +52,8 @@ def log_out():
 
 @st.dialog("Обновление пароля")
 def change_password():
-    password = st.text_input("### Введите текущий пароль")
-    new_password = st.text_input("### Введите новый пароль")
+    password = st.text_input("### Введите текущий пароль", type="password")
+    new_password = st.text_input("### Введите новый пароль", type="password")
     if st.button("Обновить пароль"):
         if check_password(password):
             hashed_password = password_hashing(new_password)
